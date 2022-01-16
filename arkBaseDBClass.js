@@ -1,19 +1,42 @@
-/**
- * Must pass a knex configuration object to constructor. This comes from the file that configures database Knex connection.
- */
 class arkBaseDBClass {
-    constructor(knex, tableName) {
-	this.knex = knex
-	this.tableName = tableName
+    /**
+     * Must pass a knex configuration object to constructor. This comes from the file that configures database Knex connection.
+     * 
+     * @param knex Knex configuration
+     * @param tableName Name of the SQL table, for Knex use
+     * @param dictionary Object from class arkDictionary with metadata about the table fields.
+     */
+    constructor(knex, tableName, dictionary) {
+		this.knex = knex
+		this.tableName = tableName
+		this.dictionary = dictionary
+    }
+	
+    /**
+     * Returns first record to match fields
+     * @param fields Used in WHERE clause
+     */
+    findFirst(fields) {
+		return new Promise((resolve, reject) => {
+			this.knex.first('*').from(this.tableName)
+				.where(fields)
+				.then((row) => { resolve(row) })
+				.catch((err) => { reject(new Error(err)) })
+		})
     }
 
-    findFirst(fields) {
-	return new Promise((resolve, reject) => {
-	    this.knex.first(fields).from(this.tableName)
-		.then((row) => { return row })
-		.catch((err) => { reject new Error(err) })
-	})
-    }
+	/**
+	 * Inserts a new record into the database.
+	 * @param fields Object with values
+	 * @param [optional] If true, uses arkDictionary filter() on data.
+	 */
+	insert(fields, filter) {
+		return new Promise((resolve, reject) => {
+			this.knex(this.tableName).insert(filter ? this.dictionary.filter(fields) : fields)
+				.then((r) => { resolve(r) })
+				.catch((err) => { reject(new Error(err)) });
+		})
+	}
 }
 
 module.exports = { arkBaseDBClass }

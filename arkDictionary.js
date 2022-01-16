@@ -40,12 +40,26 @@ class Dictionary {
             return value;
     }
 
+	/**
+	 * Filter given object, return only fields that exist in dictionary.
+	 * Useful for pruning out extra data in input object before sending to database.
+	 */
+	filter(inputFields) {
+		var r = {};
+
+		for (var i in inputFields)
+			if (this.fields[i])
+				r[i] = inputFields[i];
+
+		return r;
+	}
+	
     /**
-     * Filters dictionaries based on criteria. Needs copy() defined in functions.js.
+     * Filters dictionaries based on criteria.
      * @param {object} criteria Which dict fields should have which values. e.g.: { showEdit: true }
-     * @return dict fields copy()ed
+     * @return dict fields copied
      */
-    filter(criteria) {
+    filterWithCriteria(criteria) {
 	var r = {};
 	
 	for (var i in this.fields) {
@@ -68,7 +82,7 @@ class Dictionary {
 		    break;
 		}
 	    if (criteriaMet)
-		r[i] = copy(this.fields[i]);
+		r[i] = this.fields[i];
 	}
 	
 	return r;
