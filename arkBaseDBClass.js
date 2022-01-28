@@ -14,12 +14,13 @@ class arkBaseDBClass {
 	
     /**
      * Returns first record to match fields
-     * @param fields Used in WHERE clause
+     * @param where Used in WHERE clause.
+	 * @param (optional) fields Array of which fields to return (will return '*' if not specified).
      */
-    findFirst(fields) {
+    findFirst(where, fields) {
 		return new Promise((resolve, reject) => {
-			this.knex.first('*').from(this.tableName)
-				.where(fields)
+			this.knex.first(fields || '*').from(this.tableName)
+				.where(where)
 				.then((row) => { resolve(row) })
 				.catch((err) => { reject(new Error(err)) })
 		})
