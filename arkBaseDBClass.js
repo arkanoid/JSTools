@@ -27,17 +27,59 @@ class arkBaseDBClass {
     }
 
 	/**
+	 * Returns a SELECT statement automatically creating JOINs on fields which have "references" property in dictionary.
+	 * Note: doesn't add a WHERE clause.
+	 */
+	select(selection) {
+		// fields holds all fields in the SELECT, including from other tables, if any.
+		// joins holds a list of parameters for knex .join() function.
+		let [ fields, joins ] = this.dictionary.getKnexData(selection)
+
+		// if any JOIN was defined, adds it
+		let result = this.knex(this.tableName).select(fields)
+		if (joins.length)
+			joins.forEach((j) => {
+				result = result.join(...j)
+			})
+
+		return result
+	}
+
+	selectNoJoinReferences(selection) {
+		let [ fields ] = this.dictionary.getKnexData(selection)
+		return this.knex(this.tableName).select(fields)
+	}
+
+	/**
 	 * Inserts a new record into the database.
 	 * @param fields Object with values
 	 * @param [optional] If true, uses arkDictionary filter() on data.
 	 */
 	insert(fields, filter) {
-		return new Promise((resolve, reject) => {
-			this.knex(this.tableName).insert(filter ? this.dictionary.filter(fields) : fields)
-				.then((r) => { resolve(r) })
-				.catch((err) => { reject(new Error(err)) });
-		})
+		//return new Promise((resolve, reject) => {
+			return this.knex(this.tableName).insert(filter ? this.dictionary.filter(fields) : fields)
+			//	.then((r) => { resolve(r) })
+			//	.catch((err) => { reject(new Error(err)) });
+		//})
 	}
+
+	/**
+	 * Updates record.
+	 * @param fields Object with values
+	 * @param where Where function
+	 */
+	update(fields, where) {
+		//return new Promise((resolve, reject) => {
+			return this.knex(this.tableName).update(fields).where(where)
+				//.then((r) => { resolve(r) })
+				//.catch((err) => { reject(new Error(err)) });
+		//})
+	}
+
+	
+	/*jsonRemove(field, jsonPath) {
+		return this.knex(this.tableName).jsonRemove(field, jsonPath)
+	}*/
 }
 
 module.exports = { arkBaseDBClass }
