@@ -45,7 +45,7 @@
  *  }
  */
 
-const arkDictionaryClient = require('arkDictionaryClient')
+const arkDictionaryClient = require('./arkDictionaryClient')
 
 class arkDictionary extends arkDictionaryClient {
 	// stores the data received when created
@@ -67,7 +67,7 @@ class arkDictionary extends arkDictionaryClient {
 		this.#selections = new Map()
 		this.newSelectionKnexData('*')
 
-		this.#fields.forEach((v, k) => {
+		this.fields.forEach((v, k) => {
 
 			let dbcolumn = (v.realFieldName || k)
 
@@ -137,8 +137,8 @@ class arkDictionary extends arkDictionaryClient {
 	
 	
     getFieldValue(field, value) {
-        if (this.#fields[field].keyOf)
-            return this.#fields[field].keyOf[value].name;
+        if (this.fields[field].keyOf)
+            return this.fields[field].keyOf[value].name;
         else
             return value;
     }
@@ -151,7 +151,7 @@ class arkDictionary extends arkDictionaryClient {
 		var r = {};
 
 		for (var i in inputFields)
-			if (this.#fields[i])
+			if (this.fields[i])
 				r[i] = inputFields[i];
 
 		return r;
@@ -165,27 +165,27 @@ class arkDictionary extends arkDictionaryClient {
     filterWithCriteria(criteria) {
 	var r = {};
 	
-	for (var i in this.#fields) {
+	for (var i in this.fields) {
 	    var criteriaMet = true;
 	    for (var j in criteria)
 		switch (j) {
 		case "showEdit":
 		case "showInCardList":
-		    if (!(this.#fields[i][j] === criteria[j]
-			  || (criteria[j] && typeof this.#fields[i][j] === "undefined")))
+		    if (!(this.fields[i][j] === criteria[j]
+			  || (criteria[j] && typeof this.fields[i][j] === "undefined")))
 			criteriaMet = false;
 		    break;
 		case "canBeNull":
                 case "primaryKey":
-		    if (!(this.#fields[i][j] === criteria[j]
-			  || (!criteria[j] && typeof this.#fields[i][j] === "undefined"))) {
+		    if (!(this.fields[i][j] === criteria[j]
+			  || (!criteria[j] && typeof this.fields[i][j] === "undefined"))) {
 			criteriaMet = false;
 			break;
 		    }
 		    break;
 		}
 	    if (criteriaMet)
-		r[i] = this.#fields[i];
+		r[i] = this.fields[i];
 	}
 	
 	return r;
@@ -199,7 +199,7 @@ class arkDictionary extends arkDictionaryClient {
     getDataFromForm(formPrefix) {
         let r = {};
 
-        for (var i in this.#fields) {
+        for (var i in this.fields) {
             let e = $(`#${formPrefix}${i}`);
             if (e[0]) {
                 switch (e.attr("type")) {
@@ -229,7 +229,7 @@ class arkDictionary extends arkDictionaryClient {
      * @param prefix: Applied to field names to find form objects. e.g.: if prefix = "en_" then we expect to find <input id="en_name">
      */
     populateForm(data, prefix) {
-	      for (var i in this.#fields) {
+	      for (var i in this.fields) {
 		        var e = $(`#${prefix}${i}`);
 		        if (e[0]) {
 		            switch(e[0].tagName) {

@@ -1,12 +1,13 @@
 // This class is meant both as the base class to arkDictionary (which is server side), and also meant to be used client side.
 
 class arkDictionaryClient {
-	#fields
+	fields;
+	primaryKeyFields;
 
 	constructor(fields) {
         if (!fields)
             throw new Error('arkDictionaryClient created with no fields')
-        this.#fields = fields;
+        this.fields = fields;
 	}
 
 	/**
@@ -16,8 +17,8 @@ class arkDictionaryClient {
     adjustData(data) {
         let r = {};
 
-        //for (var i in this.#fields) {
-		this.#fields.forEach((f, i) => {
+        //for (var i in this.fields) {
+		this.fields.forEach((f, i) => {
             if (data[i]) {
                 switch (f.type) {
                 case 'number':
@@ -57,6 +58,24 @@ class arkDictionaryClient {
 		return r;
 	}
 
+	/**
+	 * Returns a string with all primary key fields united.
+	 * Example: suppose the primary keys in the dictionary are the fields 'user_id' and 'product_id'.
+	 * Suppose data is: { user_id: 14, product_id: 71, other: 'xyz' }
+	 * Result is: '14-71'
+	 */
+	generateStringId(data) {
+		// create a list of the primary key fields, if it's not done yet
+		if (!this.primaryKeyFields) {
+			this.primaryKeyFields = new Array();
+			this.fields.forEach((v, k) => {
+				if (v.primaryKey)
+					this.primaryKeyFields.push(k);
+			});
+		}
+
+		return this.primaryKeyFields.filter((v) => { return data.has(v); }).reduce((total, v) => { return total + (total.length > 0 ? '-' : '') + data.get(v); }, '');
+	}
 }
 
 if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {

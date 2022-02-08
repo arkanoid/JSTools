@@ -24,8 +24,8 @@ The keys (db_field_name1, etc) are actual names of the table columns. Each one p
 * **label**: string describing the field. For showing in the UI.
 * **type**: one of the following: 'string', 'number', 'boolean', 'json'.
 * **realFieldName**: (__optional__): If defined will be used instead of db_field_name. Useful for defining the same field more than once for different references (foreign table joins).
-* **showEdit** (__optional, default true__): Whether this field should be used in a <form>. The class has methods for generating/reading HTML forms. Since by default this field is true, you only need to specify this key if the value is **false**.
-* **showInCardList** (__optional, default true__): Whether this should appear in a <ul> list inside a <card>.
+* **showEdit** (__optional, default true__): Whether this field should be used in a &lt;form&gt;. The class has methods for generating/reading HTML forms. Since by default this field is true, you only need to specify this key if the value is **false**.
+* **showInCardList** (__optional, default true__): Whether this should appear in a &lt;ul&gt; list inside a &lt;card&gt;.
 * **canBeNull** (__optional, default false__): If true, blank values will be substituted with null before updating/inserting.
 * **primaryKey** (__optional, default false__): Defines if this field is a primary key. Most tables will have only one field but some can have more than one.
 * **selections** (__optional__): Array with names of selections.
@@ -142,7 +142,7 @@ const dictUsers = new arkDictionaryClient(dictStructUsers)
 
 ### adjustData(data)
 Adjusts a set of data before sending trough Knex/Ajax.
-* param {array} data: Each field inside <data> is converted as appropriated (parseInt() for number, etc.)
+* param {array} data: Each field inside &lt;data&gt; is converted as appropriated (parseInt() for number, etc.)
 
 
 # class arkDictionary
@@ -278,47 +278,98 @@ See arkBaseDBClass examples.
 # class arkBaseDBClass
 
 
-# class arkDataBox
+# class arkDataDisplay
 
-For client side. This class controls a group of HTML elements, populating/updating them with data from AJAX. The elements can be:
-* An <ol> or <ul> list (Bootstrap style)
+For client sid usee. This class controls a group of HTML elements, populating/updating them with data from AJAX. The elements can be:
+* An &lt;ol&gt; or &lt;ul&gt; list (Bootstrap style)
 ** Simple list or with tabbable panes
-* A <div> (Bootstrap **Card**)
+* A &lt;div&gt; (Bootstrap **Card**)
 ** Can display a single record (card body) or several records (card list)
 ** Can use both card body and list
+* A &lt;table&gt;
 
-When creating the object the "id" attribute must be passed. So in the HTML file you just need one of these:
+When creating the object the "id" attribute of at least one element must be passed. So in the HTML file you just need one of these elements:
 
 ```HTML
-<div id="name"></div>
-
-<!-- or -->
-
-<ul id="name"></ul>
-
-<!-- or -->
-
-<ol id="name"></ol>
+// one of the following
+<div id="myname"></div>
+<ul id="myname"></ul>
+<ol id="myname"></ol>
+<table id="myname"></table>
 ```
-Object will be created as:
+Object would be created as this (simple example):
 ```JavaScript
-new arkDataBox('name')
+var name = new arkDataDisplay({ elementID: 'myname' }, { source: '/urlpath...' } );
 ```
 
-## Adding sources
+# Constructor: arkDataDisplay(displayOptions, dataSourceOptions)
+* param **displayOptions** (_object_): See method addDisplay.
+* param **dataSourceOptions** (_object_): See method addDataSource.
 
-After creating the arkDataBox object, at least one data source must be added.
+## Method addDisplay(options)
 
-* Method: addDataSource(source, name, single)
-** source: string, object or function to obtain the data. It is expected the data comes in the form a Knex query will return, be it several records or a single record.
-*** string: an URL to be called trough AJAX (with GET)
-*** object: also data for AJAX, in this form:
+The parameter options is an object with the following properties:
+
+* **name** (_optional string_): Identifies the display. Default value is 'main' if not specified. All arkDataDisplay objects must have a display named 'main'.
+* **elementID** (_string_): ID property of the HTML element used for display.
+* **style** (_optional string_): Depends on the base HTML element used.
+** DIV: style can be 'list', 'card', 'tabbed-list'. Default is list.
+Obs: if the style is 'tabbed-list', the HTML code is expected to be like this example:
+```HTML
+<div id="myname" class="row">
+	<div class="col-4 col-sm-6"></div> <!-- or any other col- size, as you want -->
+	<div class="col-8 col-sm-6"></div>
+</div>
+```
+** UL, OL and TABLE: style is ignored.
+
+## Method: addDataSource(options)
+
+The parameter options is an object with the following properties:
+
+* **name** (_optional string_): Identifies the data source. Default value is 'main' if not specified. All arkDataDisplay objects must have a data source named 'main'.
+* **source** (_string, object or function_): Where to obtain the data. It is expected the data comes in the form a Knex query will return, be it several records or a single record. The 3 possible types are:
+** string: an URL to be called trough AJAX (with GET)
+** object: also data for an AJAX call, in this form:
 ```JavaScript
 {
 	url: '...',
 	method: 'post'	// or get
 }
 ```
-*** function: should return the data
-** name: optional string, default 'main'. The name of this data source for identification by other methods. If 'main' it will be the main data source used to populate/update this arkDataBox. At least this data source must be specified.
-** single: optional boolean, default false. If true data returned by source is a single record.
+** function: A callback that should return the data.
+* **single** (_optional boolean_): Default false. If true data returned by source is a single record (like the one returned by knex.js first()).
+* **dictionary** (_arkDictionaryClient_)
+
+## Adding displays and data sources
+
+After creating the arkDataDisplay object, more data sources and displays may be added.
+
+Example:
+```JavaScript
+let prod = new arkDataDisplay({ elementID: 'products' }, { source: '/products' })
+	.addDataSource({ name: 'tabContent', source: getContent })
+	.addDisplay({ name: 'tabContent', elementID: 'tab-content', style: 'card' })
+	.update();
+```
+
+
+## Updating the data
+
+The method update() will call AJAX (if any), update the data, then update the HTML element.
+
+If you want the data to be showed when the page is loaded, this method should be called as soon as the object is configured.
+
+### Simple example
+
+```HTML
+<div id="products"></div>
+```
+
+```JavaScript
+// configure and update as soon as the page finishes loading
+// assuming the URL /products returns AJAX data
+$(document).ready(function() {
+	let showChars = new arkDataDisplay('products').addDataSource('/products').update();
+})
+```
