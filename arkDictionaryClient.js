@@ -6,7 +6,7 @@ class arkDictionaryClient {
 
 	constructor(fields) {
         if (!fields)
-            throw new Error('arkDictionaryClient created with no fields')
+            throw new Error('arkDictionaryClient created with no fields');
         this.fields = fields;
 	}
 
@@ -59,7 +59,7 @@ class arkDictionaryClient {
 	}
 
 	/**
-	 * Returns a string with all primary key fields united.
+	 * Returns a string with all primary key fields united. Note: param is a RECORD only
 	 * Example: suppose the primary keys in the dictionary are the fields 'user_id' and 'product_id'.
 	 * Suppose data is: { user_id: 14, product_id: 71, other: 'xyz' }
 	 * Result is: '14-71'
@@ -74,10 +74,18 @@ class arkDictionaryClient {
 			});
 		}
 
-		return this.primaryKeyFields.filter((v) => { return data.has(v); }).reduce((total, v) => { return total + (total.length > 0 ? '-' : '') + data.get(v); }, '');
+		return this.primaryKeyFields.filter((v) => { return data.hasOwnProperty(v); }).reduce((total, v) => { return total + (total.length > 0 ? '-' : '') + data[v]; }, '');
 	}
 }
 
-if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
-    module.exports = arkDictionaryClient
+/*if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
+    module.exports = arkDictionaryClient;
+	}*/
+
+try {
+	if (this === window) {
+		// browser
+	}
+} catch(e) {
+	module.exports = arkDictionaryClient;
 }

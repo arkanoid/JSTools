@@ -13,8 +13,8 @@ class arkDataDisplay {
 		if (!dataSourceOptions.name)
 			dataSourceOptions.name = 'main';
 		
-		addDisplay(displayOptions);
-		addDataSource(dataSourceOptions);
+		this.addDisplay(displayOptions);
+		this.addDataSource(dataSourceOptions);
 		
 		return this;
 	}
@@ -31,7 +31,7 @@ class arkDataDisplay {
 			options.style = 'list';
 		this.#displays.set(options.name, options);
 
-		let o = this.#displays.get(name);
+		let o = this.#displays.get(options.name);
 		o.element = document.getElementById(options.elementID);
 		// stores the element type (DIV, UL, OL, TABLE)
 		o.elementType = o.element.nodeName;
@@ -40,7 +40,7 @@ class arkDataDisplay {
 			throw new Error(msg);
 		}
 
-		initDisplay(name);
+		this.initDisplay(name);
 
 		return this;
 	}
@@ -74,7 +74,7 @@ class arkDataDisplay {
 	 */
 	initDisplay(name = null) {
 		if (!name) {
-			this.#displays.forEach((v, k) => { initDisplay(k); });
+			this.#displays.forEach((v, k) => { this.initDisplay(k); });
 		} else {
 			// name was specified
 			let o = this.#displays.get(name);
@@ -103,9 +103,9 @@ class arkDataDisplay {
 			case 'TABLE':
 				break;
 			}
+			
+			o.initialized = true;
 		}
-
-		o.initialized = true;
 
 		return this;
 	}
@@ -144,11 +144,12 @@ class arkDataDisplay {
 
 	updateDisplay(name='main') {
 		let o = this.#displays.get(name);
+		let d = this.#dataSources.get(name);
 
 		if (!o.initialized)
-			initDisplay(name);
+			this.initDisplay(name);
 
-		if (!o.data) {
+		if (!d.data) {
 			console.log(`Looking above the chair shoulder, ${name} saw something not move...`);
 			return this;
 		}
@@ -157,7 +158,9 @@ class arkDataDisplay {
 		case 'DIV':
 			switch (o.style) {
 			case 'list':
-
+				d.data.forEach((row) => {
+					console.log(row);
+				});
 				break;
 			case 'card':
 
@@ -182,10 +185,10 @@ class arkDataDisplay {
 	 * Calls reloadDataSource() and updateDisplay()
 	 */
 	update(name='main') {
-		reloadDataSource(name)
+		this.reloadDataSource(name)
 			.then((data) => {
 				this.#dataSources.get(name).data = data;
-				updateDisplay(name);
+				this.updateDisplay(name);
 			})
 			.catch((err) => { alert('The dice tumbled and shows: ' + err); });
 	}

@@ -1,3 +1,5 @@
+const debug = require('debug')('ark:db');
+
 class arkBaseDBClass {
     /**
      * Must pass a knex configuration object to constructor. This comes from the file that configures database Knex connection.
@@ -28,23 +30,112 @@ class arkBaseDBClass {
 
 	/**
 	 * Returns a SELECT statement automatically creating JOINs on fields which have "references" property in dictionary.
-	 * Note: doesn't add a WHERE clause.
+	 * NOTE: You don't need necessarily to pass the 'where' parameter. You can get the result of this method and apply a .where()
+	 * method directly to it.
 	 */
-	select(selection) {
+	select(selection, where=null) {
 		// fields holds all fields in the SELECT, including from other tables, if any.
 		// joins holds a list of parameters for knex .join() function.
-		let [ fields, joins ] = this.dictionary.getKnexData(selection)
+		let [ fields, joins, maps ] = this.dictionary.getKnexData(selection)
+
+		debug('arkBaseDBClass select()', selection, fields, joins, maps);
 
 		// if any JOIN was defined, adds it
-		let result = this.knex(this.tableName).select(fields)
+		let result = this.knex(this.tableName).select(fields);
+		//let resultMaps = [];
 		if (joins.length)
 			joins.forEach((j) => {
 				result = result.join(...j)
-			})
+			});
 
-		return result
+		if (where)
+			result = result.where(where);
+		
+		if (maps && maps.length)
+			maps.forEach((m) => {
+				//debug('select() maps loop');
+				//debug(m);
+				result = result.map(
+				//-resultMaps.push(
+					function(row) {
+					return this.knex(m.table).select(m.foreignData)
+						.where(m.referenceField, `${this.tableName}.${m.referenceFromMainQuery}`)
+						.then((mapdata) => {
+							row[m.key] = mapdata;
+							return row;
+						})
+						//.catch((err) => { console.log(`arkBaseDBClass select(${selection}) map`, err); });
+					}
+				//-);
+				);
+			});
+
+		/*if (resultMaps && maps)
+			return [ result, resultMaps ];
+		else*/
+			return result;
 	}
 
+	// under testing. if works, will substitute select()
+	selectX(selection, where=null) {
+		return new Promise((resolve, reject) => {
+			// fields holds all fields in the SELECT, including from other tables, if any.
+			// joins holds a list of parameters for knex .join() function.
+			let [ fields, joins, maps ] = this.dictionary.getKnexData(selection)
+			debug('arkBaseDBClass select()', selection, fields, joins, maps);
+
+			// if any JOIN was defined, adds it
+			let result = this.knex(this.tableName).select(fields);
+
+			if (joins.length)
+				joins.forEach((j) => {
+					result = result.join(...j)
+				});
+
+			if (where)
+				result = result.where(where);
+
+			// runs the query
+			// 2 different ways, if we have map or not
+			if (maps && maps.length) {
+
+				result.then((rows) => {
+					let promiseList = [];
+					rows.forEach((row) => {
+						maps.forEach((m) => {
+							promiseList.push(new Promise((rs, rj) => {
+								let q = this.knex(m.table).select(m.foreignData)
+									.where(m.referenceField, row[m.referenceFromMainQuery]); //`${this.tableName}.${m.referenceFromMainQuery}`);
+								debug(q.toSQL());
+								q.then((mapdata) => {
+									row[m.key] = mapdata;
+									rs();
+								})
+									.catch((err) => { rj(err); });
+							}));
+						});
+					});
+					Promise.all(promiseList).then((r) => {
+						resolve(rows);
+					})
+						.catch((err) => { reject(err); });
+				});
+
+			} else {
+				// no maps.
+				result.then((rows) => {
+					resolve(rows);
+				})
+					.catch((err) => { reject(err); });
+			}
+		});
+	}
+
+
+	/*
+	 * Does the same as select(), but with no joins, no maps, just a plain select. 
+	 * Ignores fields with 'references' property.
+	 */
 	selectNoJoinReferences(selection) {
 		let [ fields ] = this.dictionary.getKnexData(selection)
 		return this.knex(this.tableName).select(fields)

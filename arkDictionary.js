@@ -6,44 +6,6 @@
  * - Added field 'realFieldName'
  * - selections, knexData
  */
-/**
- * Database "dictionaries" to ease some work I have with Knex.js.
- * A dictionary here is a list of the table fields and some descriptive data.
- * General structure:
- * const fields = {
- *   db_field_name: {...},
- * }
- * Each field data contains the following:
- * - label: string describing the field
- * - type: string, number, boolean, json
- * - realFieldName: optional, if defined will be used instead of db_field_name. Useful for defining the same field more than once for different references (foreign table joins).
- * - showEdit (optional, default true): this field should be used in a <form>
- * - showInCardList (optional, default true): should appear in a <ul> list inside a <card>.
- * - canBeNull (optional, default false): if true, blank values will be substituted with null before updating/inserting.
- * - primaryKey (optional, default false): Defines if this field is a primary key. Most tables will have only one field but some can have more than one.
- * - selections (optional): Array with names of selections.
- *	Selections are field groupings for different queries. For example, let's say a table has the fields: id, name, description, class_id
- * (where this last one references another table.)
- * Fields id and name have selections: ['short','long']. Field class_id has selections: ['long'].
- * In the relevant methods, if 'short' is passed as selection name, only the fields [id, name] will be used.
- * If 'long' is the selection name only the fields [id, name, class_id] will be used.
- *
- * - references (optional): Field references another table. Example tructure:
- *	{	field: 'id',		// field name in foreign table
- *		table: 'tableb',	// foreign table
- *		foreignData: ['name', 'abc']	// fields from foreign table
- * }
- * In the structure above, foreign table fields will be added to queries using the table name and _ as alias. Ex: "tableb.name AS tableb_name"
- *
- * - keyOf (optional): Defines an object from where to take the 'real' data from. Useful for ENUM db fields.
- *  The object will have a structure like this:
- *  exampleEnum = {
- *    "enumField": {
- *      "name": "The Enum Field" // more presentable than "enumField"
- *      // ... there may be other fields, for customized use
- *    }
- *  }
- */
 
 const arkDictionaryClient = require('./arkDictionaryClient')
 
@@ -63,7 +25,6 @@ class arkDictionary extends arkDictionaryClient {
 			throw new Error('arkDictionary received no table name')
 		this.#tableName = table
 
-		//this.#selectionNames = []
 		this.#selections = new Map()
 		this.newSelectionKnexData('*')
 
@@ -86,7 +47,7 @@ class arkDictionary extends arkDictionaryClient {
 				})
 
 			// Create list for knex (fields for SELECT and lists for JOINs)
-			if (v.references && v.references.foreignData) {
+			if (v.references && v.references.foreignData && !v.references.nested) {
 				// adds data for each selection
 				let knexDataJoin = [
 					v.references.table,
@@ -106,6 +67,25 @@ class arkDictionary extends arkDictionaryClient {
 							this.#knexData.get(s).get('select').push(`${v.references.table}.${ref} AS ${v.references.table}_${ref}`)
 						})
 				})
+			} else if (v.references && v.references.foreignData && v.references.nested) {
+				// nested
+				this.#knexData.get('*').get('maps').push({
+					table: v.references.table, // knex(...)
+					foreignData: v.references.foreignData, // select(...,...)
+					referenceField: `${v.references.table}.${v.references.field}`, // where(...,
+					referenceFromMainQuery: dbcolumn, // ...)
+					key: k
+				});
+				if (v.selections)
+					v.selections.forEach((s) => {
+						this.#knexData.get(s).get('maps').push({
+							table: v.references.table, // knex(...)
+							foreignData: v.references.foreignData, // select(...,...)
+							referenceField: `${v.references.table}.${v.references.field}`, // where(...,
+							referenceFromMainQuery: dbcolumn, // ...)
+							key: k
+						});
+					})
 			} else {
 				// no references
 				if (v.selections)
@@ -116,11 +96,17 @@ class arkDictionary extends arkDictionaryClient {
 		})
 	}				
 
-	// Add new selection name to structure #knexData
+	/* Add new selection name to structure #knexData
+	 * Inside each selectionName:
+	 * - select: structure to mount the SELECT query for that selection.
+	 * - joins: arrays to mount the JOIN clauses
+	 * - maps: arrays to mount the map() functions for subqueries
+	 */
 	newSelectionKnexData(selectionName) {
 		this.#knexData.set(selectionName, new Map())
 		this.#knexData.get(selectionName).set('select', [])
 		this.#knexData.get(selectionName).set('joins', [])
+		this.#knexData.get(selectionName).set('maps', [])
 	}
 
 	/**
@@ -132,7 +118,11 @@ class arkDictionary extends arkDictionaryClient {
 	 * So each element of the array can be used for a knex .join() call.
 	 */
 	getKnexData(selection = '*') {
-		return [ this.#knexData.get(selection).get('select'), this.#knexData.get(selection).get('joins') ]
+		return [
+			this.#knexData.get(selection).get('select'),
+			this.#knexData.get(selection).get('joins'),
+			this.#knexData.get(selection).get('maps')
+		];
 	}
 	
 	

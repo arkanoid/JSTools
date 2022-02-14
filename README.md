@@ -24,13 +24,23 @@ The keys (db_field_name1, etc) are actual names of the table columns. Each one p
 * **label**: string describing the field. For showing in the UI.
 * **type**: one of the following: 'string', 'number', 'boolean', 'json'.
 * **realFieldName**: (__optional__): If defined will be used instead of db_field_name. Useful for defining the same field more than once for different references (foreign table joins).
-* **showEdit** (__optional, default true__): Whether this field should be used in a &lt;form&gt;. The class has methods for generating/reading HTML forms. Since by default this field is true, you only need to specify this key if the value is **false**.
+* **edit** (_optional, object or boolean, default false_): If false (or not specified) this field won't be used in a &lt;form&gt;. The class has methods for generating/reading HTML forms. If you want the field to appear in forms, specify it as an object with the following fields:
+** **position** (_string_): How to position this field in relation to others. Valid values are:
+*** 'single': Field will occupy an entire row.
+*** 'shared': Field will share row with other fields.
+** **type** (_optional string_): HTML type field. Usually will be inferred from data type. Valid values are:
+*** 'textarea'
+*** 'select' - additional fields: **select_value** (complete field name); **select_text** (complete field name)
 * **showInCardList** (__optional, default true__): Whether this should appear in a &lt;ul&gt; list inside a &lt;card&gt;.
 * **canBeNull** (__optional, default false__): If true, blank values will be substituted with null before updating/inserting.
 * **primaryKey** (__optional, default false__): Defines if this field is a primary key. Most tables will have only one field but some can have more than one.
 * **selections** (__optional__): Array with names of selections.
 **	Selections are field groupings for different queries. For example, let's say a table has the fields: id, name, description, class_id (where this last one references another table).  Fields id and name have selections: ['short','long']. Field class_id has selections: ['long']. In the relevant methods, if 'short' is passed as selection name, only the fields [id, name] will be used. If 'long' is the selection name only the fields [id, name, class_id] will be used.
-* **references** (__optional__): Field references another table.
+* **references** (_optional object_): Field references another table. This object can have the following fields:
+** **field** (_string_): Field name in the foreign table to join, usually its primary key.
+** **table** (_string_): Foreign table name.
+* **nested** (_optional boolean, default false_): If true the table is a **nested query**, that means, each record from the main query will receive the result of a subquery in this field.
+** **foreignData** (_array_): List of fields from foreign table to insert into select.
 ** Example structure:
 ```JavaScript
 {	field: 'id',		// field name in foreign table
@@ -85,7 +95,7 @@ This is a very simple dictionary.
 
 ```JavaScript
 // separate file with only the data structure; so this same file can be used for both client and server side.
-// users.dict.js
+// projectname/db/users.dict.js
 const dictStructUsers = new Map ([
     ['id', {
 		label: 'ID',
@@ -276,6 +286,31 @@ See arkBaseDBClass examples.
 
 
 # class arkBaseDBClass
+
+Class used to abstract all knex.js use. Individual database classes can inherit from this. Files, usually in directory projectname/db, can be like this:
+
+```JavaScript
+// example file: projectname/db/users.js
+const knex = require('../knex/knex');
+const arkBaseDBClass = require('../JSTools/arkBaseDBClass')['arkBaseDBClass'];
+const arkDictionary = require('../JSTools/arkDictionary');
+const dictStructUsers = require('./users.dict');
+
+class DBUsers extends arkBaseDBClass {
+    constructor() {
+		let d = new arkDictionary(dictStructUsers, 'users');
+		super(knex, 'users', d);
+    }
+}
+module.exports = new DBUsers();
+```
+
+The above just defines a bare bones class, passing the **knex** object and corresponding arkDictionary. That's enough for the most common SQL queries, updates, inserts, and so on. If customized Knex/SQL is needed one can define more methods in DBUsers above.
+
+## constructor(knex, tableName, dictionary)
+* **knex** (_object_): knex.js connection object.
+* **tableName** (_string_): The database table name.
+* **dictionary** (_object class arkDictionary_): The data dictionary.
 
 
 # class arkDataDisplay
