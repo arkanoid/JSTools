@@ -7,9 +7,9 @@
  * - selections, knexData
  */
 
-const arkDictionaryClient = require('./arkDictionaryClient')
+const arkDataDictClient = require('./arkDataDictClient')
 
-class arkDictionary extends arkDictionaryClient {
+class arkDataDict extends arkDataDictClient {
 	// stores the data received when created
 	#tableName
 
@@ -20,9 +20,9 @@ class arkDictionary extends arkDictionaryClient {
 	#knexData = new Map();
 	
     constructor(fields, table) {
-		super(fields)
+		super(fields, table)
 		if (!table)
-			throw new Error('arkDictionary received no table name')
+			throw new Error('arkDataDict received no table name')
 		this.#tableName = table
 
 		this.#selections = new Map()
@@ -250,5 +250,5 @@ class arkDictionary extends arkDictionaryClient {
 */
 
 if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
-    module.exports = arkDictionary;
+    module.exports = arkDataDict;
 }

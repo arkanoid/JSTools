@@ -117,6 +117,7 @@ class arkDataDisplay {
 			console.log(`Martian Manhunter heard someone yell "${name}" but was occupied`);
 			return;
 		}
+		console.log(o);
 		
 		return new Promise((resolve, reject) => {
 			if (typeof o.source == 'function')
@@ -133,19 +134,17 @@ class arkDataDisplay {
 				error: (jqXHR, status, thrown) => {
 					o.querying = false;
 					alert(`Failure reloading data from site: ${status} (${jqXHR.statusText})`);
-					reject();
+					reject(status);
 				}
 			});
 		});
-
-		return this;
 	}
 
 
 	updateDisplay(name='main') {
 		let o = this.#displays.get(name);
 		let d = this.#dataSources.get(name);
-
+			
 		if (!o.initialized)
 			this.initDisplay(name);
 
@@ -153,20 +152,22 @@ class arkDataDisplay {
 			console.log(`Looking above the chair shoulder, ${name} saw something not move...`);
 			return this;
 		}
-			
+
+		console.log(`o.elementType = ${o.elementType}, o.style = ${o.style}`);
 		switch (o.elementType) {
 		case 'DIV':
 			switch (o.style) {
 			case 'list':
 				d.data.forEach((row) => {
-					console.log(row);
+					let text = d.dictionary.toString(row, o.elementType, o.style);
+					$(o.element).append('<div class="list-group-item">' + text + '</div>');
 				});
 				break;
 			case 'card':
-
+				console.log('card');
 				break;
 			case 'tabbed-list':
-
+				console.log('tabbed-list');
 				break;
 			}
 			break;
