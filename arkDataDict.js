@@ -61,10 +61,10 @@ class arkDataDict extends arkDataDictClient {
 						this.#knexData.get(s).get('joins').push(knexDataJoin)
 					})
 				v.references.foreignData.forEach((ref) => {
-					this.#knexData.get('*').get('select').push(`${v.references.table}.${ref} AS ${v.references.table}_${ref}`)
+					this.#knexData.get('*').get('select').push(`${v.references.table}.${ref} AS ${v.references.table}__${ref}`)
 					if (v.selections)
 						v.selections.forEach((s) => {
-							this.#knexData.get(s).get('select').push(`${v.references.table}.${ref} AS ${v.references.table}_${ref}`)
+							this.#knexData.get(s).get('select').push(`${v.references.table}.${ref} AS ${v.references.table}__${ref}`)
 						})
 				})
 			} else if (v.references && v.references.foreignData && v.references.nested) {
@@ -133,26 +133,13 @@ class arkDataDict extends arkDataDictClient {
             return value;
     }
 
-	/**
-	 * Filter given object, return only fields that exist in dictionary.
-	 * Useful for pruning out extra data in input object before sending to database.
-	 */
-	filter(inputFields) {
-		var r = {};
-
-		for (var i in inputFields)
-			if (this.fields[i])
-				r[i] = inputFields[i];
-
-		return r;
-	}
 	
     /**
      * Filters dictionaries based on criteria.
      * @param {object} criteria Which dict fields should have which values. e.g.: { showEdit: true }
      * @return dict fields copied
      */
-    filterWithCriteria(criteria) {
+    delete_filterWithCriteria(criteria) {
 	var r = {};
 	
 	for (var i in this.fields) {

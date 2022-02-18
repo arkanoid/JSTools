@@ -28,12 +28,9 @@ class arkBaseDBClass {
 		})
     }
 
-	/**
-	 * Returns a SELECT statement automatically creating JOINs on fields which have "references" property in dictionary.
-	 * NOTE: You don't need necessarily to pass the 'where' parameter. You can get the result of this method and apply a .where()
-	 * method directly to it.
-	 */
-	select(selection, where=null) {
+
+
+	old_select(selection, where=null) {
 		// fields holds all fields in the SELECT, including from other tables, if any.
 		// joins holds a list of parameters for knex .join() function.
 		let [ fields, joins, maps ] = this.dictionary.getKnexData(selection)
@@ -53,10 +50,7 @@ class arkBaseDBClass {
 		
 		if (maps && maps.length)
 			maps.forEach((m) => {
-				//debug('select() maps loop');
-				//debug(m);
 				result = result.map(
-				//-resultMaps.push(
 					function(row) {
 					return this.knex(m.table).select(m.foreignData)
 						.where(m.referenceField, `${this.tableName}.${m.referenceFromMainQuery}`)
@@ -64,20 +58,19 @@ class arkBaseDBClass {
 							row[m.key] = mapdata;
 							return row;
 						})
-						//.catch((err) => { console.log(`arkBaseDBClass select(${selection}) map`, err); });
 					}
-				//-);
 				);
 			});
 
-		/*if (resultMaps && maps)
-			return [ result, resultMaps ];
-		else*/
-			return result;
+		return result;
 	}
 
-	// under testing. if works, will substitute select()
-	selectX(selection, where=null) {
+	/**
+	 * Returns a SELECT statement automatically creating JOINs on fields which have "references" property in dictionary.
+	 * NOTE: You don't need necessarily to pass the 'where' parameter. You can get the result of this method and apply a .where()
+	 * method directly to it.
+	 */
+	select(selection, where=null) {
 		return new Promise((resolve, reject) => {
 			// fields holds all fields in the SELECT, including from other tables, if any.
 			// joins holds a list of parameters for knex .join() function.

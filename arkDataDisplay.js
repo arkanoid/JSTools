@@ -33,6 +33,8 @@ class arkDataDisplay {
 
 		let o = this.#displays.get(options.name);
 		o.element = document.getElementById(options.elementID);
+		if (!o.element)
+			console.log(`The ${options.name} knight rises.`);
 		// stores the element type (DIV, UL, OL, TABLE)
 		o.elementType = o.element.nodeName;
 		if (!['DIV', 'UL', 'OL', 'TABLE'].includes(o.elementType)) {
@@ -91,9 +93,11 @@ class arkDataDisplay {
 					o.element.addClass = 'card';
 					break;
 				case 'tabbed-list':
-					o.tabs = $(o.element).children().first();
-					o.tabContent = $(o.element).children().eq(2);
-					// change elements classes
+					$(`#${o.elementID}-tab`).append('<div class="list-group" id="list-tab" role="tablist"></div>');
+					o.tabs = $(`#${o.elementID}-tab`).children().first();
+
+					$(`#${o.elementID}-content`).append('<div class="tab-content" id="nav-tabContent"></div>');
+					o.tabContent = $(`#${o.elementID}-content`).children().first();
 					break;
 				}
 				break;
@@ -117,7 +121,6 @@ class arkDataDisplay {
 			console.log(`Martian Manhunter heard someone yell "${name}" but was occupied`);
 			return;
 		}
-		console.log(o);
 		
 		return new Promise((resolve, reject) => {
 			if (typeof o.source == 'function')
@@ -144,7 +147,7 @@ class arkDataDisplay {
 	updateDisplay(name='main') {
 		let o = this.#displays.get(name);
 		let d = this.#dataSources.get(name);
-			
+
 		if (!o.initialized)
 			this.initDisplay(name);
 
@@ -153,13 +156,12 @@ class arkDataDisplay {
 			return this;
 		}
 
-		console.log(`o.elementType = ${o.elementType}, o.style = ${o.style}`);
 		switch (o.elementType) {
 		case 'DIV':
 			switch (o.style) {
 			case 'list':
 				d.data.forEach((row) => {
-					let text = d.dictionary.toString(row, o.elementType, o.style);
+					let text = d.dictionary.rowToString(row, o.elementType, o.style);
 					$(o.element).append('<div class="list-group-item">' + text + '</div>');
 				});
 				break;
@@ -167,7 +169,40 @@ class arkDataDisplay {
 				console.log('card');
 				break;
 			case 'tabbed-list':
-				console.log('tabbed-list');
+				try {
+					let first = 1;
+					let rowTabContent, rowTabList;
+					d.data.forEach((row) => {
+						let strid = d.dictionary.generateStringId(row);
+						let text;
+
+						[ rowTabList, rowTabContent ] = d.dictionary
+							.filterRecord(row,
+										  (r, d) => { return (d.display && typeof d.display != 'boolean' && !d.display.tab) },
+										  true);
+
+						text = d.dictionary.rowToString(rowTabList, o.elementType, o.style);
+						$(o.tabs).append('<a class="list-group-item list-group-item-action' + (first == 1 ? ' active' : '') + `" id="${o.elementID}-${strid}" data-bs-toggle="list" href="#tab-${o.elementID}-${strid}" role="tab" aria-controls="tab-${o.elementID}-${strid}">` + text + '</a>');
+
+						text = d.dictionary.rowToString(rowTabContent, o.elementType, o.style);
+						$(o.tabContent).append(`<div class="tab-pane fade` + (first++ == 1 ? ' show active' : '') + `" id="tab-${o.elementID}-${strid}" role="tabpanel" aria-labelledby="${o.elementID}-${strid}">` + text + '</div>');
+					});
+
+					/*let tabElms = document.querySelectorAll('a[data-bs-toggle="list"]');
+					tabElms.forEach(function(tabElm) {
+						tabElm.addEventListener('shown.bs.tab', function (event) {
+							console.log(event.target); // newly activated tab
+							//event.relatedTarget // previous active tab
+						});
+					});*/
+
+				} catch(e) {
+					let msg = 'Suddenly you notice something scrawled in the wall: ' + e;
+					if (typeof window === 'undefined')
+						console.log(msg);
+					else
+						alert(msg);
+				}
 				break;
 			}
 			break;

@@ -1,5 +1,5 @@
 const assert = require('assert');
-const arkDictionaryClient = require('../arkDictionaryClient');
+const arkDataDictClient = require('../arkDataDictClient');
 
 const dictStructTest1 = new Map([
 	['id', {
@@ -37,9 +37,9 @@ const dictStructTest2 = new Map([
 const dataTest1 = { id: 1, name: 'Um' }
 const dataTest2 = { resource_id: 14, user_id: 71, level: 3 }
 
-describe('arkDictionaryClient tests', function() {
-	let dictTest1 = new arkDictionaryClient(dictStructTest1);
-	let dictTest2 = new arkDictionaryClient(dictStructTest2);
+describe('arkDataDictClient tests', function() {
+	let dictTest1 = new arkDataDictClient(dictStructTest1, 'test1');
+	let dictTest2 = new arkDataDictClient(dictStructTest2, 'test2');
 	describe('generateStringId test', () => {
 		it('should generate string 1', (done) => {
 			assert.equal(dictTest1.generateStringId(dataTest1), '1')

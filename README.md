@@ -35,6 +35,7 @@ The keys (db_field_name1, etc) are actual names of the table columns. Each one p
 	* **position** (_string, default 'shared'_): How to position this field in relation to others. Valid values are:
 		* 'single': Field will occupy an entire row (line break after it).
 		* 'shared': Field will share row with other fields (inline).
+	* **tab** (_optional boolean, default false_): Only will work if the **style** passed to `arkDataDisplay.addDisplay()` is 'tabbed-list'. This field will be shown in the lateral tab. If it has the `references.nested = true` property, all fields in property `references.foreignData` will be put into the tab.
 	* **label** (_string, default 'b'_): How to display the field label.
 		* 'b': Label will be enclosed in &lt;b&gt; element.
 		* Other string values: will be used as a formatting string. Inside it, the sequence `{label}` will be substituted by the label and `{value}` by the value. Note there is no `$` before the `{}`.
@@ -182,6 +183,19 @@ Returns a string with all primary key fields united. Note: param is a RECORD onl
 Example: suppose the primary keys in the dictionary are the fields `user_id` and `product_id`. Suppose also **data** is: `{ user_id: 14, product_id: 71, other: 'xyz' }`
 Result is: `'14-71'`
 
+## Method filterRecord(record, filter, returnNotList)
+Takes a **record** of data and returns a new record, with only the fields that match **filter**.
+
+Fields which have not a datadict definition will automatically go to the second list (see `returnNotList`).
+
+* **record** (_object_): Record data, usually from the database.
+* **filter** (_optional, string or function, default '!references'_): This filter will be used to determine which fields will be in the result.
+	* If it's a function, it will be called with two arguments: the field value (record) and the field definition in the data dictionary.
+	* If it's a string, then one of the predefined filters will be used:
+		* '!references': Fields which datadict doesn't have a `references` property.
+* **returnNotList** (_optional boolean, default false_): If true, the fields that do NOT match `filter` will be collected and **two** objects will be returned in an array.
+
+
 # class arkDataDict
 
 Database dictionaries meant to work alongside knex.js, server-side.
@@ -274,11 +288,11 @@ The parameter options is an object with the following properties:
 * **elementID** (_string_): ID property of the HTML element used for display.
 * **style** (_optional string_): Depends on the base HTML element used.
 	* DIV: style can be 'list', 'card', 'tabbed-list'. Default is list.
-Obs: if the style is 'tabbed-list', the HTML code is expected to be like this example:
+Obs: if the style is 'tabbed-list', the HTML code is expected to be like this example (mind the `id`s):
 ```HTML
 <div id="myname" class="row">
-	<div class="col-4 col-sm-6"></div> <!-- or any other col- size, as you want -->
-	<div class="col-8 col-sm-6"></div>
+	<div id="myname-tab" class="col-4 col-sm-6"></div> <!-- or any other col- size, as you want -->
+	<div id="myname-content" class="col-8 col-sm-6"></div>
 </div>
 ```
 ** UL, OL and TABLE: style is ignored.
