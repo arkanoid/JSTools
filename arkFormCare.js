@@ -46,6 +46,7 @@ class arkFormCare {
 				if (!this.status) {
 					this.show();
 					this.status = 'new';
+					this.changeElementsStates();
 				}
 			});
 		}
@@ -65,6 +66,22 @@ class arkFormCare {
 		}
 
 		return this;
+	}
+
+	// change buttons states
+	changeElementsStates() {
+		// new or edit
+		if (this.status == 'new' || this.status == 'edit') {
+			if (this.options.buttonNew)
+				$(this.options.buttonNew).prop('disabled', true);
+			if (this.options.buttonEdit)
+				$(this.options.buttonEdit).prop('disabled', true);
+		} else if (!this.status) {
+			if (this.options.buttonNew)
+				$(this.options.buttonNew).prop('disabled', false);
+			if (this.options.buttonEdit)
+				$(this.options.buttonEdit).prop('disabled', false);
+		}
 	}
 
 	populateForm() {
@@ -152,10 +169,16 @@ class arkFormCare {
 	}
 
 	show() {
-		if (this.options.parentElement)
+		let e, p;
+		if (this.options.parentElement) {
+			e = this.options.parentElement;
 			this.options.parentElement.show();
-		else
+		} else {
+			e = this.element;
 			this.element.show();
+		}
+		p = e.position();
+		$(window).scrollTop(p.top);
 	}
 
 	hide() {

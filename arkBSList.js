@@ -9,8 +9,23 @@ class arkBSList extends arkBSDataLoad {
 
 	readBSElements() {
 		if (this.options.tabbed) {
+			// It's a tabbed list, so we have two subelements: the tabs list, and their contents
 			this.elements.tabs = $(this.elements.main).children().first();
 			this.elements.tabcontent = $(this.elements.main).children().eq(1);
+		} else {
+			// not tabbed list.
+			let eltype = $(this.elements.main).prop('nodeName');
+			// Then list ust be <ul>, <ol>, or <div>
+			if (!['UL','OL','DIV'].includes(eltype)) {
+				alert(`arkBSList readBSElements ${this.name}: type isn't ul, ol, or div`);
+				return;
+			}
+			this.elements.mainType = eltype;
+			// Must also be of class list-group
+			if (!$(this.elements.main).hasClass('list-group')) {
+				alert(`arkBSList readBSElements ${this.name}: not list-group`);
+				return;
+			}
 		}
 	}
 
@@ -37,7 +52,7 @@ class arkBSList extends arkBSDataLoad {
 		let yesthis = this;
 		tabElms.forEach(function(tabElm) {
 			tabElm.addEventListener('shown.bs.tab', function (event) {
-				console.log('selectedIndex', $(event.target).data('index'));
+				//console.log('selectedIndex', $(event.target).data('index'));
 				yesthis.selectedIndex = $(event.target).data('index'); // newly activated tab
 				//event.relatedTarget // previous active tab
 			});
