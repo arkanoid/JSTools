@@ -123,7 +123,8 @@ class arkFormCare {
 				try {
 					if ($(controls[c]) && $(controls[c]).prop
 						&& ['INPUT','TEXTAREA','SELECT'].includes($(controls[c]).prop('nodeName'))) {
-						fieldname = $(controls[c]).prop('id').split('_')[1];
+						//fieldname = $(controls[c]).prop('id').split('_')[1];
+						fieldname = $(controls[c]).prop('id').substr( $(controls[c]).prop('id').indexOf('_')+1 );
 						if (!this.isPrimaryKey(fieldname))
 							values[ fieldname ] = $(controls[c]).val();
 					}
@@ -134,17 +135,18 @@ class arkFormCare {
 
 		this.oldStatus = this.status;
 		this.status = 'sending';
+		//console.log(values);
 		$.ajax({
 			url: this.options.urlNew,
-			method: (this.status == 'new' ? 'POST' : 'PUT'),
+			method: (this.oldStatus == 'new' ? 'POST' : 'PUT'),
 			data: values,
 			success: (result) => {
+				alert(this.oldStatus == 'new' ? 'New record saved.' : 'Record updated.');
 				this.status = '';
-				alert(this.status == 'new' ? 'New record saved.' : 'Record updated.');
 				this.hide();
 				if (this.options.BSDataLoad)
 					this.options.BSDataLoad.update();
-				resolve(result);
+				//resolve(result);
 			},
 			error: (jqXHR, status, thrown) => {
 				this.status = this.oldStatus;

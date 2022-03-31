@@ -68,7 +68,8 @@ class arkBaseDBClass {
 						r[i] = JSON.stringify(row[i])
 					else
 						r[i] = row[i]
-					break
+					//console.log('arkBaseDBClass adjustData json ', r);
+					break;
                 default:
                     r[i] = row[i];
                 }
@@ -97,6 +98,7 @@ class arkBaseDBClass {
 	 */
 	update(fields, datadict, where) {
 		//return new Promise((resolve, reject) => {
+		//console.log(datadict ? this.adjustData(fields, datadict) : fields);
 		return this.knex(this.tableName).update(
 			(datadict ? this.adjustData(fields, datadict) : fields)
 		).where(where)

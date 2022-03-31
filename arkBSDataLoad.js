@@ -20,7 +20,7 @@ class arkBSDataLoad {
 		else
 			this.dataSource = dataSource;
 
-		this.options = options;
+		this.options = (options || {});
 
 		this.elements.main = document.getElementById(name);
 		if (!this.elements.main)
@@ -29,6 +29,33 @@ class arkBSDataLoad {
 
 		_arkBSDataLoad.set(name, this);
 
+		// check for a form filter
+		try {
+		if (this.options.filterForm) {
+			this.options.filterFormElement = $(`#${this.options.filterForm}`);
+			if (!this.options.filterFormElement) {
+				alert(`arkBSDataLoad filterForm ${this.options.filterForm} not found`);
+			} else {
+				this.options.filterFormButton = $(`#${this.options.filterForm} button`);
+			}
+
+			if (this.options.filterFormButton)
+				$(this.options.filterFormButton).click(() => {
+					let urlFilterQuery = '';
+					$(`#${this.options.filterForm} input`).each((i,el) => {
+						let v = $(el).val();
+						if (v)
+							urlFilterQuery += (urlFilterQuery ? '&' : '') + $(el).attr('id') + '=' + v;
+					});
+					this.urlFilterQuery = urlFilterQuery;
+					//console.log('set this.urlFilterQuery', this.urlFilterQuery);
+					this.update();
+				});
+		}
+		} catch(e) {
+			alert('arkBSDataLoad constructor error processing options.filterForm', e);
+		}
+
 		return this;
 	}
 
@@ -36,14 +63,17 @@ class arkBSDataLoad {
 	/* Loads data and updates HTML
 	 * Calls reloadDataSource() and updateDisplay()
 	 */
-	update() {
-		this.reloadDataSource()
+	update(urlFilterQuery) {
+		this.reloadDataSource(urlFilterQuery)
 			.then((data) => {
 				this.data = data;
 				this.selectedIndex = null;
 				this.updateDisplay();
 			})
-			.catch((err) => { alert('The dice tumbled and shows: ' + err); });
+			.catch((err) => {
+				console.log(this.data);
+				alert('The dice tumbled and shows: ' + err);
+			});
 		return this;
 	}
 
@@ -51,8 +81,8 @@ class arkBSDataLoad {
 	 * Checks this.data (previously loaded and stored) and returns the record selected by the user.
 	 */
 	getRecord() {
-		console.log(`${this.name} getRecord() ${this.selectedIndex}`);
-		console.log(typeof this.selectedIndex);
+		//console.log(`${this.name} getRecord() ${this.selectedIndex}`);
+		//console.log(typeof this.selectedIndex);
 		if (typeof this.selectedIndex == 'number')
 			return this.data[ this.selectedIndex ];
 	}
@@ -60,32 +90,44 @@ class arkBSDataLoad {
 	updateDisplay() {
 	}
 	
-	reloadDataSource() {
+	reloadDataSource(urlFilterQuery) {
 		// check if an ajax query was already started
 		if (this.querying) {
 			console.log(`Martian Manhunter heard someone yell "${this.name}" but was occupied`);
 			return;
 		}
-		
-		return new Promise((resolve, reject) => {
-			if (typeof this.dataSource == 'function')
-				resolve(this.dataSource());
-			else
-				this.querying = true;
-			$.ajax({
-				url: this.dataSource.url,
-				method: this.dataSource.method,
-				success: (data) => {
-					this.querying = false;
-					this.data = data;
-					resolve(data);
-				},
-				error: (jqXHR, status, thrown) => {
-					this.querying = false;
-					alert(`Failure reloading data from site: ${status} (${jqXHR.statusText})`);
-					reject(status);
-				}
+
+		/* check if we have filters.
+		   If one was passed as parameter it will be used,
+		   otherwise the constructed one (based on filterForm)
+		*/
+		let filterQuery = (urlFilterQuery || this.urlFilterQuery);
+
+		if (this.dataSource)
+			return new Promise((resolve, reject) => {
+				if (typeof this.dataSource == 'function')
+					resolve(this.dataSource());
+				else
+					this.querying = true;
+				//console.log('data source is', this.dataSource.url + (filterQuery ? '?' + filterQuery : ''));
+				$.ajax({
+					url: this.dataSource.url + (filterQuery ? '?' + filterQuery : ''),
+					method: this.dataSource.method,
+					success: (data) => {
+						this.querying = false;
+						this.data = data;
+						resolve(data);
+					},
+					error: (jqXHR, status, thrown) => {
+						this.querying = false;
+						alert(`Failure reloading data from site: ${status} (${jqXHR.statusText})`);
+						reject(status);
+					}
+				});
 			});
-		});
+		else	// if (this.dataSource)
+			return new Promise((resolve, reject) => {
+				resolve(null);
+			});
 	}
 }
