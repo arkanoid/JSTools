@@ -31,6 +31,7 @@ class arkBSList extends arkBSDataLoad {
 
 	updateDisplay() {
 		if (this.options.tabbed) {
+			// tabbed list
 			try {
 				this.elements.tabs.empty();
 				this.elements.tabcontent.empty();
@@ -72,28 +73,76 @@ class arkBSList extends arkBSDataLoad {
 			// not tabbed
 			try {
 				let result = '';
+				let buttonsBehavior = this.options.buttonsBehavior ?? 'default';
 				this.data.forEach((r, ri) => {
 					let text = this.options.print(r);
+					let buttons = '';
 					//let rowid = this.options.rowid(r);
-					// ...add id="${this.name}-${rowid}" 
+					// ...add id="${this.name}-${rowid}"
+
+					// check options.buttons
+					if (this.options.buttons)
+						this.options.buttons.forEach((bt, bti) => {
+							buttons += `<button type="button" class="btn btn-light btn-sm list-button" data-list-button="${bti}">${bt.text}</button>`;
+						});
+					
 					if (['UL','OL'].includes(this.elements.mainType))
-						result += `<li class="list-group-item" data-index="${ri}">` + text + '</li>';
+						result += `<li class="list-group-item list-group-item-action`
+						+ (buttonsBehavior == 'hidden' ? ' d-flex justify-content-between align-items-start' : '')
+						+ `" data-index="${ri}">`
+						+ (buttonsBehavior == 'hidden' ? `<div class="ms-2 me-auto">${text}</div>` : text)
+						+ buttons + '</li>';
 					else
-						result += `<div class="list-group-item" data-index="${ri}">` + text + '</div>';
+						result += `<div class="list-group-item list-group-item-action`
+						+ (buttonsBehavior == 'hidden' ? ' d-flex justify-content-between align-items-start' : '')
+						+ `" data-index="${ri}">`
+						+ (buttonsBehavior == 'hidden' ? `<div class="ms-2 me-auto">${text}</div>` : text)
+						+ buttons + '</div>';
 				});
 				$(this.elements.main).empty().append(result);
-				if (this.options.selectable)
-					$(this.elements.main).children().click((event) => {
-						this.selectedIndex = $(event.target).data('index');
 
-						$(event.target).siblings().removeClass('active');
-						$(event.target).siblings().attr('aria-current', false);
-						$(event.target).addClass('active');
-						$(event.target).attr('aria-current', true);
+				if (buttonsBehavior == 'hidden')
+					$('button.list-button').hide();
+
+				if (this.options.selectable) {
+					// on click list element
+					$(this.elements.main).children().click((event) => {
+						let target = event.target;
+						// check if we got a child element by mistake
+						// child?
+						if (!$(event.target).data('index') && $(event.target.parentNode).data('index'))
+							target = event.target.parentNode;
+						// grandchild?
+						else if (!$(event.target).data('index') && !$(event.target.parentNode).data('index') && $(event.target.parentNode.parentNode).data('index'))
+							target = event.target.parentNode.parentNode;
+
+						
+						this.selectedIndex = $(target).data('index');
+
+						// deactivate previously selected item
+						$(target).siblings().removeClass('active');
+						$(target).siblings().attr('aria-current', false);
+						if (buttonsBehavior == 'hidden')
+							$(target).siblings().children('div .list-button').hide();
+
+						// activate selected item
+						$(target).addClass('active');
+						$(target).attr('aria-current', true);
+						if (buttonsBehavior == 'hidden')
+							$(target).children('div .list-button').show();
 
 						if (this.options.onSelect)
 							this.options.onSelect(this.getRecord());
 					});
+
+					// on click list buttons
+					if (this.options.buttons)
+						this.options.buttons.forEach((bt, bti) => {
+							$(`button.list-button[data-list-button="${bti}"]`).click((event) => {
+								bt.onclick($(event.target.parentElement).data('index'));
+							});
+						});
+				}
 			} catch(e) {
 				alert('arkBSList updateDisplay 2', e);
 				console.log(e);

@@ -17,19 +17,42 @@ class arkBaseDBClass {
     /**
      * Returns first record to match fields
      * @param where Used in WHERE clause.
-	 * @param (optional) fields Array of which fields to return (will return '*' if not specified).
+     * @param (optional) fields Array of which fields to return (will return '*' if not specified).
      */
-    findFirst(where, fields) {
+    findFirst(where, fields, callback) {
 		return new Promise((resolve, reject) => {
 			this.knex.first(fields || '*').from(this.tableName)
 				.where(where)
-				.then((row) => { resolve(row) })
+			.then((row) => {
+			    let r = row;
+			    if (callback && typeof callback == 'function')
+				r = callback(row);
+			    resolve(r);
+			})
 				.catch((err) => { reject(new Error(err)) })
 		})
     }
 
 
-	/**
+    /*
+     * List @fields based on clause @where ordered by @order.
+     * All parameters are optional. Default will list the entire table.
+     */
+    list(fields, where, order) {
+		return new Promise((resolve, reject) => {
+			let q = this.knex.select(fields || '*').from(this.tableName);
+			if (where)
+				q = q.where(where);
+			if (order)
+				q = q.orderBy(order);
+			
+			q.then((rows) => { resolve(rows); })
+				.catch((err) => { reject(new Error(err)); });
+		});
+    }
+    
+
+    /**
      * Adjusts a set of data before sending to Knex/Ajax.
      * @param {array} row Each field inside <row> is converted as appropriated (parseInt() for number, etc.)
      */

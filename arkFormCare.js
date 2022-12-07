@@ -47,6 +47,8 @@ class arkFormCare {
 					this.show();
 					this.status = 'new';
 					this.changeElementsStates();
+					if (this.options.beforeNew)
+						this.options.beforeNew();
 				}
 			});
 		}
@@ -61,6 +63,8 @@ class arkFormCare {
 					this.show();
 					this.populateForm();
 					this.status = 'edit';
+					if (this.options.beforeEdit)
+						this.options.beforeEdit();
 				}
 			});
 		}

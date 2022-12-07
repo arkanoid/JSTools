@@ -48,7 +48,7 @@ class arkBSDataLoad {
 							urlFilterQuery += (urlFilterQuery ? '&' : '') + $(el).attr('id') + '=' + v;
 					});
 					this.urlFilterQuery = urlFilterQuery;
-					//console.log('set this.urlFilterQuery', this.urlFilterQuery);
+					//debugconsole.log('set this.urlFilterQuery', this.urlFilterQuery);
 					this.update();
 				});
 		}
@@ -63,7 +63,7 @@ class arkBSDataLoad {
 	/* Loads data and updates HTML
 	 * Calls reloadDataSource() and updateDisplay()
 	 */
-	update(urlFilterQuery) {
+    update(urlFilterQuery) {
 		this.reloadDataSource(urlFilterQuery)
 			.then((data) => {
 				this.data = data;
@@ -81,10 +81,18 @@ class arkBSDataLoad {
 	 * Checks this.data (previously loaded and stored) and returns the record selected by the user.
 	 */
 	getRecord() {
-		//console.log(`${this.name} getRecord() ${this.selectedIndex}`);
-		//console.log(typeof this.selectedIndex);
+		//debugconsole.log(`${this.name} getRecord() ${this.selectedIndex}`);
+		//debugconsole.log(typeof this.selectedIndex);
 		if (typeof this.selectedIndex == 'number')
 			return this.data[ this.selectedIndex ];
+	}
+
+	/* Similar to getRecord(), but instead returns the record index in the internal data array.
+	 * Useful for checking on the HTML element, since it will have the property data-index with the same number
+	 */
+	getIndex() {
+		if (typeof this.selectedIndex == 'number')
+			return this.selectedIndex;
 	}
 
 	updateDisplay() {
@@ -103,13 +111,16 @@ class arkBSDataLoad {
 		*/
 		let filterQuery = (urlFilterQuery || this.urlFilterQuery);
 
+		//debugconsole.log('data source is', this.dataSource);
 		if (this.dataSource)
 			return new Promise((resolve, reject) => {
-				if (typeof this.dataSource == 'function')
+				if (typeof this.dataSource == 'function') {
+					//debugconsole.log('data source is a function', this.dataSource);
 					resolve(this.dataSource());
-				else
+					return;
+				} else
 					this.querying = true;
-				//console.log('data source is', this.dataSource.url + (filterQuery ? '?' + filterQuery : ''));
+				//debugconsole.log('data source + filterQuery is', this.dataSource.url + (filterQuery ? '?' + filterQuery : ''));
 				$.ajax({
 					url: this.dataSource.url + (filterQuery ? '?' + filterQuery : ''),
 					method: this.dataSource.method,

@@ -67,7 +67,7 @@ As indicated in the Example HTML above, the card can have the following parts:
 
 * **options** (_optional object_): Holds some additional options.
 	* **list** (_optional function_): Callback function, will receive an entire record and must return the 'printable' form. The output will be show in the list part of the card, if there is one.
-	* **body** (_optional function_): Callback function, will receive an entire record and must return the 'printable' form to be shown in the first card-body (or card-img-overlay). Only one record will be shown.
+	* **body** (_optional function_): Callback function, will receive an entire record and must return the 'printable' form to be shown in the first card-body (or card-img-overlay). Only one record will be shown. The second parameter passed to the function will be which card-body is being filled; if `null` then it's the main body. Other bodies will receive a number starting from 0.
 	* **imgsrc** (_optional function or string_): This option will be used if there is an `<img>` element in the card. If string, the value will be used only once at start to fill the `src` attribute. If a function, it will be called with the record as parameter when the *body* callback function is called. The return value will be inserted in the `src` attribute.
 
 
@@ -96,6 +96,12 @@ Same as arkBSDataLoad. The differences/additions are listed below.
 	* **selectable** (_optional boolean_): If true the list items can be selected. Only one item can be selected at a time. Note: if **tabbed** is used the list will automatically be selectable, so no need to also specify this option if **tabbed** is already used.
 	* **onSelect** (_optional function_): This callback function will be called whenever an item is selected (clicked). The parameter passed is the record data that's stored.
 	* **rowid** (_optional function_): This callback function receives the record data and must return which primary key is associated with the data. Usually the function will be in the format `(x) => { return x.id; }`. Note: if **tabbed** is used then this option must also be specified.
+	* **buttons** (_optional array_): List of buttons to add to the list element. Each array element is an object with the following fields:
+		* **text** (string): Button text.
+		* **onclick** (function): Callback function. Will receive as argument the result of **rowid** property.
+	* **buttonsBehavior** (_optional string_): Control the behavior of the above **buttons**. Values can be:
+		* 'default': No different behavior.
+		* 'hidden': Buttons are hidden by default and only shown when the element list is selected.
 
 
 # class arkFormCare
@@ -122,4 +128,22 @@ The constructor will look for a button named 'btn_new_formname' (anywhere in the
 	* **parentElement** (_optional string or object_): Parent element containing the form. If specified, actions that affect the entire form (like hide() and show()) will also apply to the parent. If string, it's the HTML id; if object it's a jQuery.
 	* **buttonNew** (_optional string_): ID of a button element that will be used to put the form into 'new' state (create new record). If not specified, a button named 'btn_new_formname' will be looked for instead.
 	* **buttonEdit** (_optional string_): Same as above but for editing records. The default name is 'btn_edit_formname'.
-	* **primaryKeys** (_optional string or array_): List of fields that are primary keys to the data. When in **edit** mode, those fields will be kept in the data being sent through ajax. When in **new** mode these fields will be removed from data before send. 
+	* **primaryKeys** (_optional string or array_): List of fields that are primary keys to the data. When in **edit** mode, those fields will be kept in the data being sent through ajax. When in **new** mode these fields will be removed from data before send.
+	* **beforeNew** (_optional function_): Called before the form is shown to fill a new record.
+	* **beforeEdit** (_optional function_): Called before the form is shown to edit a record.
+
+
+# class arkBaseDBClass
+
+Used as base class for all database access classes. Usually those classes go under projectname/db in an Express project.
+
+## constructor (knex, tableName)
+Must pass a knex configuration object to constructor. This comes from the file that configures database Knex connection.
+* **knex** (_object_): Knex configuration object.
+* **tableName** (_string_): Name of the SQL table, for Knex use.
+
+## findFirst (where, fields, callback) {
+Returns first record to match the where clause.
+* **where** (_object_): Used in WHERE clause. Same syntax as Knex .where() method.
+* **fields** (_optional array_): Fields to return (will use '*' if not specified).
+* **callback** (_optional function_): If specified, the resulting record will be passed through this function before being resolved.
