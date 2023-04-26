@@ -23,11 +23,14 @@ class arkBaseDBClass {
 		return new Promise((resolve, reject) => {
 			this.knex.first(fields || '*').from(this.tableName)
 				.where(where)
-			.then((row) => {
+				.then((row) => {
 			    let r = row;
 			    if (callback && typeof callback == 'function')
 				r = callback(row);
-			    resolve(r);
+
+					debug(`arkBaseDBClass.findFirst(${where} ->`, r);
+
+					resolve(r);
 			})
 				.catch((err) => { reject(new Error(err)) })
 		})
