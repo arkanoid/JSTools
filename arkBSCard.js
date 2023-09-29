@@ -96,6 +96,7 @@ class arkBSCard extends arkBSDataLoad {
 					content = this.options.body(this.data);
 				} catch(e) {
 					alert('Under the lantern it is written:', this.name, e);
+					console.log('Under the lantern it is written:', this.name, e);
 				}
 				if (typeof content != 'undefined' && content)
 					$(this.elements.body).empty().append(content);

@@ -129,7 +129,7 @@ class arkFormCare {
 						&& ['INPUT','TEXTAREA','SELECT'].includes($(controls[c]).prop('nodeName'))) {
 						//fieldname = $(controls[c]).prop('id').split('_')[1];
 						fieldname = $(controls[c]).prop('id').substr( $(controls[c]).prop('id').indexOf('_')+1 );
-						if (!this.isPrimaryKey(fieldname))
+						if (this.status == 'edit' || !this.isPrimaryKey(fieldname))
 							values[ fieldname ] = $(controls[c]).val();
 					}
 				} catch(e) {

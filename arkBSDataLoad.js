@@ -60,7 +60,8 @@ class arkBSDataLoad {
 	}
 
 
-	/* Loads data and updates HTML
+	/**
+	 * Loads data and updates HTML
 	 * Calls reloadDataSource() and updateDisplay()
 	 */
     update(urlFilterQuery) {
@@ -74,6 +75,17 @@ class arkBSDataLoad {
 				console.log(this.data);
 				alert('The dice tumbled and shows: ' + err);
 			});
+		return this;
+	}
+
+	/**
+	 * Does the same as update(), but does NOT calls reloadDataSource().
+	 * The data is received as parameter here.
+	 */
+	updateDirect(data) {
+		this.data = data;
+		this.selectedIndex = null;
+		this.updateDisplay();
 		return this;
 	}
 
